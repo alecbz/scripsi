@@ -35,4 +35,4 @@ If we want to get more information about the match, we can use the matches metho
 You can also retrive the stored documents efficiently:
 
     ssi.documents  # lazy list of documents
-    ssi.documents[3]  # document with id string
+    ssi.documents['3']  # document with id '3'

@@ -7,12 +7,14 @@ module Scripsi
     @@redis = Redis.new(options)
   end
 
+  # reference to the redis object
   def self.redis
     @@redis
   end
 
   @@partition_size = 10
 
+  # the size of the partitions to break words up by
   def self.partition_size
     @@partition_size
   end
@@ -24,7 +26,7 @@ module Scripsi
   # where 0 corresponds to no letter, 1 to A, 2 to B, etc.
   #
   # @param [String] str the string we are computing a score for
-  # @return [Number] the string's score
+  # @return [Array] the string's score(s), divided into chunks each representing 10 characters
   def self.score(str)
     str = str.downcase
     scrs = []
@@ -41,16 +43,16 @@ module Scripsi
   end
 
   # get the indexer with the given id
+  def self.find(id)
+    indexer(id)
+  end
+
+  # get the indexer with the given id
   def self.indexer(id)
     type = Scripsi.redis.hget "scripsi:used", id.to_s
     if type == "ssi"
       SortedSuffixIndexer.build(id)
     end
-  end
-
-  # (see #indexer)
-  def self.find(id)
-    indexer(id)
   end
 
   class SortedSuffixIndexer
@@ -98,15 +100,23 @@ module Scripsi
         @endpoints_key = endpoints_key
       end
 
+      # get the document with the given id
+      #
+      # @param [String] id the id of the document
+      # @return [String] the original text of the document
       def [](id)
-        a, b = endpoints(id)
+        a, b = endpoints(id.to_s)
         if a and b
           Scripsi.redis.getrange @doc_key, a.to_i, b.to_i
         end
       end
 
+      # get the offset of the document with the given id in the main document string (used for internal purposes)
+      #
+      # @param (see #[])
+      # @return [Integer] the offset of the document
       def offset_of(id)
-        a,b = endpoints(id)
+        a,b = endpoints(id.to_s)
         if a and b
           a.to_i
         end
@@ -123,7 +133,9 @@ module Scripsi
 
     end
 
-    # retrive the document with the given id
+    # retrive a (lazy) list of this indexers documents
+    #
+    # @return [Documents] lazy list of documents
     def documents
       Documents.new(@document_key,@documents_key)
     end
@@ -144,7 +156,7 @@ module Scripsi
     #
     # @param (see #search)
     # @return [Array] an array of MatchData structs,
-    #   containing the id of the matched document and the indexes of where the match begins and ends
+    #   containing the document id and the start/end indexes for each match
     def matches(term)
       set = base_search(term)
       set.map do |i|

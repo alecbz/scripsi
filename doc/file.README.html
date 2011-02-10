@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta name="Content-Type" content="text/html; charset=utf-8" />
+<title>Documentation by YARD 0.6.4</title>
+<link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="css/common.css" type="text/css" media="screen" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  relpath = '';
+  if (relpath != '') relpath += '/';
+</script>
+<script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+  </head>
+  <body>
+    <script type="text/javascript" charset="utf-8">
+      if (window.top.frames.main) document.body.className = 'frames';
+    </script>
+    
+    <div id="header">
+      <div id="menu">
+  
+    <a href="_index.html" title="Index">Index</a> &raquo; 
+    <span class="title">File: README</span>
+  
+  
+  <div class="noframes"><span class="title">(</span><a href="." target="_top">no frames</a><span class="title">)</span></div>
+</div>
+
+      <div id="search">
+  <a id="class_list_link" href="#">Class List</a>
+  <a id="method_list_link" href="#">Method List</a>
+  <a id ="file_list_link" href="#">File List</a>
+</div>
+
+      <div class="clear"></div>
+    </div>
+    
+    <iframe id="search_frame"></iframe>
+    
+    <div id="content"><div id='filecontents'><h1>Scripsi</h1>
+
+<p>A flexible text-searching library built on top of redis.</p>
+
+<h2>Sorted suffix indexing</h2>
+
+<p>Sorted suffix indexing allows you to search for any substring within a set of documents. First, index a collection of documents and associated ids.</p>
+
+<pre class="code"><span class='id require'>require</span> <span class='tstring'><span class='tstring_beg'>'</span><span class='tstring_content'>scripsi</span><span class='tstring_end'>'</span></span>
+<span class='const'>Scripsi</span><span class='period'>.</span><span class='id connect'>connect</span>  <span class='comment'># connect to a running redis server
+</span>
+<span class='id ssi'>ssi</span> <span class='op'>=</span> <span class='const'>Scripsi</span><span class='op'>::</span><span class='const'>SortedSuffixIndexer</span><span class='period'>.</span><span class='id new'>new</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>myindexer</span><span class='tstring_end'>&quot;</span></span>
+<span class='id ssi'>ssi</span><span class='period'>.</span><span class='id index'>index</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>'</span><span class='tstring_content'>1</span><span class='tstring_end'>'</span></span><span class='comma'>,</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Epistulam ad te scripsi.</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id ssi'>ssi</span><span class='period'>.</span><span class='id index'>index</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>'</span><span class='tstring_content'>2</span><span class='tstring_end'>'</span></span><span class='comma'>,</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>I've written you a letter.</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id ssi'>ssi</span><span class='period'>.</span><span class='id index'>index</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>'</span><span class='tstring_content'>3</span><span class='tstring_end'>'</span></span><span class='comma'>,</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Quisnam Tusculo espistulam me misit?</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id ssi'>ssi</span><span class='period'>.</span><span class='id index'>index</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>'</span><span class='tstring_content'>4</span><span class='tstring_end'>'</span></span><span class='comma'>,</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Who in Tusculum would've sent me a letter?</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</pre>
+
+<p>You can then search for any substring, and the indexer will return the ids of the documents where that substring appears.</p>
+
+<pre class="code"><span class='id ssi'>ssi</span> <span class='op'>=</span> <span class='const'>Scripsi</span><span class='period'>.</span><span class='id indexer'>indexer</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>myindexer</span><span class='tstring_end'>&quot;</span></span>
+<span class='id ssi'>ssi</span><span class='period'>.</span><span class='id search'>search</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>te</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>        <span class='comment'># =&gt; [&quot;1&quot;,&quot;2&quot;,&quot;4&quot;]
+</span><span class='id ssi'>ssi</span><span class='period'>.</span><span class='id search'>search</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tuscul</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>    <span class='comment'># =&gt; [&quot;3&quot;,&quot;4&quot;]
+</span><span class='id ssi'>ssi</span><span class='period'>.</span><span class='id search'>search</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tusculu</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>   <span class='comment'># =&gt; [&quot;4&quot;]
+</span><span class='id ssi'>ssi</span><span class='period'>.</span><span class='id search'>search</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>you a le</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>  <span class='comment'># =&gt; [&quot;2&quot;]
+</span></pre>
+
+<p>If we want to get more information about the match, we can use the matches method:</p>
+
+<pre class="code"><span class='id match'>match</span> <span class='op'>=</span> <span class='id ssi'>ssi</span><span class='period'>.</span><span class='id matches'>matches</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>you a le</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id first'>first</span>
+<span class='id match'>match</span><span class='period'>.</span><span class='id doc'>doc</span>    <span class='comment'># =&gt; &quot;2&quot;
+</span><span class='id match'>match</span><span class='period'>.</span><span class='id start'>start</span>  <span class='comment'># =&gt; 13
+</span><span class='id match'>match</span><span class='period'>.</span><span class='id end'>end</span>    <span class='comment'># =&gt; 21
+</span>
+<span class='id ssi'>ssi</span><span class='period'>.</span><span class='id documents'>documents</span><span class='lbracket'>[</span><span class='id match'>match</span><span class='period'>.</span><span class='id doc'>doc</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='id match'>match</span><span class='period'>.</span><span class='id start'>start</span><span class='op'>...</span><span class='id match'>match</span><span class='period'>.</span><span class='id end'>end</span><span class='rbracket'>]</span>  <span class='comment'># =&gt; &quot;you a le&quot;
+</span></pre>
+
+<p>You can also retrive the stored documents efficiently:</p>
+
+<pre class="code"><span class='id ssi'>ssi</span><span class='period'>.</span><span class='id documents'>documents</span>  <span class='comment'># lazy list of documents
+</span><span class='id ssi'>ssi</span><span class='period'>.</span><span class='id documents'>documents</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>'</span><span class='tstring_content'>3</span><span class='tstring_end'>'</span></span><span class='rbracket'>]</span>  <span class='comment'># document with id '3'
+</span></pre></div></div>
+    
+    <div id="footer">
+  Generated on Wed Feb  9 23:36:13 2011 by 
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.6.4 (ruby-1.9.2).
+</div>
+
+  </body>
+</html>
