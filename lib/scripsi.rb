@@ -99,11 +99,28 @@ module Scripsi
       end
 
       def [](id)
-        endpoints = Scripsi.redis.hget(@endpoints_key, id)
-        return nil unless endpoints
-        a,b = Marshal.load(endpoints)
-        Scripsi.redis.getrange @doc_key, a.to_i, b.to_i
+        a, b = endpoints(id)
+        if a and b
+          Scripsi.redis.getrange @doc_key, a.to_i, b.to_i
+        end
       end
+
+      def offset_of(id)
+        a,b = endpoints(id)
+        if a and b
+          a.to_i
+        end
+      end
+
+      private 
+
+      def endpoints(id)
+        endpoints = Scripsi.redis.hget(@endpoints_key, id)
+        if endpoints
+          Marshal.load(endpoints)
+        end
+      end
+
     end
 
     # retrive the document with the given id
@@ -114,17 +131,32 @@ module Scripsi
     # searches for documents containing the substring term
     #
     # @param [String] term the substring to search for
+    # @return [Array] an array of document ids that term appears in
     def search(term)
-      term, length = term.downcase, term.length
-      set = nil
-      Scripsi.score(term).each_with_index do |scr,i|
-        a,b = scr.to_s, "#{scr+1.0/(27**length)}"
-        b = "(" + b unless a == b
-        ids = Scripsi.redis.zrangebyscore("#{@index_key}:#{i}",a,b)
-        set = set ? set & Set.new(ids) : Set.new(ids)
-        length -= Scripsi.partition_size
+      set = base_search(term)
+      set.map{|i| read_to_id(i.to_i) }
+    end
+
+    MatchData = Struct.new(:doc, :start, :end)
+
+    # gets document ids and the matched indexes
+    # of documents containing the term
+    #
+    # @param (see #search)
+    # @return [Array] an array of MatchData structs,
+    #   containing the id of the matched document and the indexes of where the match begins and ends
+    def matches(term)
+      set = base_search(term)
+      set.map do |i|
+        doc_id = read_to_id(i.to_i)
+        offset = documents.offset_of(doc_id)
+        a,b = nil
+        if offset
+          a = i.to_i - offset
+          b = a + term.length
+        end
+        MatchData.new(doc_id,a,b)
       end
-      set.map{|i| read_to_id(i.to_i)}.uniq
     end
 
     # creates an indexer with the given id WITHOUT CHECKING
@@ -138,6 +170,19 @@ module Scripsi
     end
 
     private
+
+    def base_search(term)
+      term, length = term.downcase, term.length
+      set = nil
+      Scripsi.score(term).each_with_index do |scr,i|
+        a,b = scr.to_s, "#{scr+1.0/(27**length)}"
+        b = "(" + b unless a == b
+        ids = Scripsi.redis.zrangebyscore("#{@index_key}:#{i}",a,b)
+        set = set ? set & Set.new(ids) : Set.new(ids)
+        length -= Scripsi.partition_size
+      end
+      set
+    end
 
     def suffixes(str)
       str = str.downcase
@@ -174,7 +219,7 @@ module Scripsi
               offset += 1
             end
           end
-          return id.to_i
+          return id
         end
       end
       raise "index is corrupt"
